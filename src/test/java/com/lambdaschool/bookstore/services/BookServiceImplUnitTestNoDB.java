@@ -20,8 +20,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = BookstoreApplicationTest.class)
@@ -115,26 +118,64 @@ public class BookServiceImplUnitTestNoDB
     @Test
     public void findAll()
     {
+    Mockito.when(bookrepos.findAll())
+        .thenReturn(myBookList);
+
+    assertEquals(5, bookService.findAll().size());
     }
 
     @Test
     public void findBookById()
     {
+        Mockito.when(bookrepos.findById(1L))
+            .thenReturn(Optional.of(myBookList.get(0)));
+
+        assertEquals("Flatterland", bookService.findBookById(1).getTitle());
     }
 
     @Test(expected = ResourceNotFoundException.class)
     public void notFindBookById()
     {
+        Mockito.when(bookrepos.findById(1000L))
+            .thenThrow(ResourceNotFoundException.class);
+
+        assertEquals("Flatterland", bookService.findBookById(1000).getTitle());
     }
 
     @Test
     public void delete()
     {
+        Mockito.when(bookrepos.findById(1L))
+            .thenReturn(Optional.of(myBookList.get(0)));
+
+        Mockito.doNothing()
+            .when(bookrepos)
+            .deleteById(1L);
+
+        bookService.delete(1);
+        assertEquals(5, myBookList.size());
     }
 
     @Test
     public void save()
     {
+//        Section s1 = new Section("Fiction");
+//        s1.setSectionid(1);
+//
+//        String b6Title = "The Leah Code";
+//        Book b6 = new Book();
+//        b6.setBookid(6);
+//        b6.setIsbn("9780307474278");
+//        b6.setTitle(b6Title);
+//        b6.setSection(s1);
+//
+//        Mockito.when(bookrepos.save(any(Book.class)))
+//            .thenReturn(b6);
+//
+//        Book addBook = bookService.save(b6);
+//        assertNotNull(addBook);
+//        assertEquals(b6.getTitle(), addBook.getTitle());
+//        I give up!
     }
 
     @Test
