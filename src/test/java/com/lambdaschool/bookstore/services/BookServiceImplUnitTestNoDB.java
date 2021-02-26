@@ -1,12 +1,15 @@
 package com.lambdaschool.bookstore.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lambdaschool.bookstore.BookstoreApplicationTest;
 import com.lambdaschool.bookstore.exceptions.ResourceNotFoundException;
 import com.lambdaschool.bookstore.models.Author;
 import com.lambdaschool.bookstore.models.Book;
 import com.lambdaschool.bookstore.models.Section;
 import com.lambdaschool.bookstore.models.Wrote;
+import com.lambdaschool.bookstore.repository.AuthorRepository;
 import com.lambdaschool.bookstore.repository.BookRepository;
+import com.lambdaschool.bookstore.repository.SectionRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,24 +19,38 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = BookstoreApplicationTest.class)
+@WithMockUser(username = "admin",
+    roles = {"USER", "ADMIN"})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = BookstoreApplicationTest.class, properties = {
+    "command.line.runner.enabled=false"})
+
 public class BookServiceImplUnitTestNoDB
 {
 
     @Autowired
     private BookService bookService;
+    @MockBean
+    private AuthorRepository authorrepos;
 
+    @MockBean
+    private SectionRepository sectionrepos;
     @MockBean
     private BookRepository bookrepos;
 
@@ -41,7 +58,7 @@ public class BookServiceImplUnitTestNoDB
 
     @Before
     public void setUp() throws
-            Exception
+        Exception
     {
 
         Author a1 = new Author("John", "Mitchell");
@@ -159,23 +176,25 @@ public class BookServiceImplUnitTestNoDB
     @Test
     public void save()
     {
-//        Section s1 = new Section("Fiction");
-//        s1.setSectionid(1);
-//
-//        String b6Title = "The Leah Code";
-//        Book b6 = new Book();
-//        b6.setBookid(6);
-//        b6.setIsbn("9780307474278");
-//        b6.setTitle(b6Title);
-//        b6.setSection(s1);
-//
-//        Mockito.when(bookrepos.save(any(Book.class)))
-//            .thenReturn(b6);
-//
-//        Book addBook = bookService.save(b6);
-//        assertNotNull(addBook);
-//        assertEquals(b6.getTitle(), addBook.getTitle());
-//        I give up!
+        Author a1 = new Author("John", "Mitchell");
+        a1.setAuthorid(1);
+        String b6Title = "The Leah Code";
+
+        Section s1 = new Section("Fiction");
+        s1.setSectionid(1);
+
+        Book b6 = new Book(b6Title, "9780307474278", 2019, s1);
+
+
+        Mockito.when(bookrepos.save(any(Book.class))).thenReturn(b6);
+        Mockito.when(sectionrepos.findById(1L)).thenReturn(Optional.of(s1));
+        Mockito.when(authorrepos.findById(1L)).thenReturn(Optional.of(a1));
+
+        b6 = bookService.save(b6);
+
+        assertNotNull(b6);
+        assertEquals(b6Title, b6.getTitle());
+
     }
 
     @Test
